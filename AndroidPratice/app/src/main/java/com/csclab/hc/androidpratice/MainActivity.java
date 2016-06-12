@@ -21,9 +21,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.CharBuffer;
+
+import java.net.InetAddress;
+
 
 public class MainActivity extends AppCompatActivity  implements View.OnClickListener {
     /**
@@ -45,7 +49,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
     Button return_button;
 
-    Socket connectionToServer;
     /**
      * Init Variable
      **/
@@ -87,33 +90,17 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
-    final MainActivity self = this;
-    private class SocketEstblish extends AsyncTask<InetAddress, Void, Void> {
-        protected Void doInBackground(InetAddress... addr) {
-            try {
-                self.connectionToServer = new Socket(addr[0], 2000);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    }
 
-    public void jumpToResultLayout(String resultStr) {
-        setContentView(R.layout.result_page);
 
-        //TODO: Bind return_button and textResult form result view
-        // HINT: findViewById()
-        // HINT: Remember to give type
-        return_button = (Button) findViewById(R.id.return_button);
-        textResult = (TextView) findViewById(R.id.textResult);
+    private InetAddress serverAddr;
 
-        if (textResult != null) {
-            //TODO: Set the result text
-            textResult.setText(resultStr);
-        }
+    public void jumpTOSocketLayout() throws IOException {
+        setContentView(R.layout.socket_page);
 
-        if (return_button != null) {
+        btnok = (Button) findViewById(R.id.ok_button);
+
+
+        if (btnok != null) {
             //TODO: prepare button listener for return button
             // HINT:
             // mybutton.setOnClickListener(new View.OnClickListener(){
@@ -121,16 +108,22 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             //          // Something to do..
             //      }
             // }
-            return_button.setOnClickListener(new View.OnClickListener() {
+            btnok.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    // TODO
+                    try {
+                        inputip = (EditText) findViewById(R.id.ip);
+                        serverAddr = InetAddress.getByName(inputip.getText().toString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     jumpToMainLayout();
                 }
 
             });
         }
-        new SocketSendResult().execute(resultStr);
     }
+
     /**
      * Function for page 1 setup
      */
@@ -206,6 +199,26 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         jumpToResultLayout(new String(num1 + " " + oper + " " + num2 + " = " + result));
     }
 
+
+    private class SocketSendResult extends AsyncTask<String, Void, Void> {
+        protected Void doInBackground(String... strs) {
+            try {
+                Socket connectionToServer = new Socket(serverAddr, 2000);
+
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(connectionToServer.getOutputStream())),
+                        true);
+                out.println(strs[0]);
+                out.close();
+                connectionToServer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+
     public void jumpToResultLayout(String resultStr) {
         setContentView(R.layout.result_page);
 
@@ -236,30 +249,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
 
             });
         }
-        try {
-            BufferedReader reader = new BufferedReader(new
-                    InputStreamReader(connectionToServer.getInputStream()));
-            reader.read(CharBuffer.wrap(resultStr));
-            this.connection = new ClientThread(reader);
-            this.connection.start();
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-    private class SocketSendResult extends AsyncTask<String, Void, Void> {
-        protected Void doInBackground(String... strs) {
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(self.connectionToServer.getOutputStream())),
-                        true);
-                out.println(strs[0]);
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
+        new SocketSendResult().execute(resultStr);
     }
 
     @Override
