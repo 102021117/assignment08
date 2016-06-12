@@ -87,7 +87,6 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
         inputip = (EditText) findViewById(R.id.ip);
         btnok = (Button) findViewById(R.id.ok_button);
         btnok.setOnClickListener(this);
-        this.connectionToServer = new Socket(String.valueOf(inputip), 2000);
         if (btnok != null) {
             //TODO: prepare button listener for return button
             // HINT:
@@ -99,6 +98,7 @@ public class MainActivity extends AppCompatActivity  implements View.OnClickList
             btnok.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     // TODO
+                    this.connectionToServer = new Socket(String.valueOf(inputip), 2000);
                     jumpToMainLayout();
                 }
 
